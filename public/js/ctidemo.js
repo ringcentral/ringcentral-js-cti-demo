@@ -119,6 +119,29 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         console.log('GET_USER_INFO_FORM_LOCAL_STORAGE: ' + json);
         return userInfo;
     }
+    t.retrieveStoreUserInfo = function() {
+        t.rcSdk.platform().get(
+            '/account/~/'
+        ).then(function(response) {
+            var data = response.json();
+            var user = t.getUserInfo();
+            user['rcUserUsername'] = data['mainNumber'];
+            t.setUserInfo(user);
+            var json = JSON.stringify(response.json());
+            console.log("ACCOUNT INFO: " + json);
+
+            t.rcSdk.platform().get(
+                '/account/~/extension/~/'
+            ).then(function(response) {
+                var data = response.json();
+                var user = t.getUserInfo();
+                user['rcUserExtension'] = data['extensionNumber'];
+                t.setUserInfo(user);
+                var json = JSON.stringify(response.json());
+                console.log("EXTENSION INFO: " + json);
+            });
+        })
+    }
     t.getUsername = function() {
         var userInfo = t.getUserInfo();
         if ('rcUserUsername' in userInfo) {
@@ -132,7 +155,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
             appInfo['server'] = t.rcServerSandbox();
         }
         var json = JSON.stringify(appInfo);
-        //console.log('SET_APP_INFO ' + json);
+        console.log('SET_APP_INFO ' + json);
         window.localStorage.setItem(t.lsKeyApp, JSON.stringify(appInfo));
         t.populateDomApp();
         t.setRcSdk(appInfo);
@@ -187,6 +210,33 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         return t.rcPgCfgGen['demoConfig']['url']['rcServerSandbox'];
     }
     t.retrieveAndSetUserNumbers = function() {
+        console.log("RET_USER_NUMBERS");
+        console.log("RET_USER_NUMBERS_PHONE");
+        t.rcSdk.platform().get(
+            '/account/~/extension/~/phone-number'
+        ).then(function(response) {
+            console.log("USER_NUMBERS_PHONE: " + response.text());
+            var json = JSON.stringify(response.json);
+            var userInfo = t.getUserInfo();
+            if ('records' in response.json) {
+                userInfo['rcUserPhoneNumbers'] = response.json['records'];
+            }
+
+            console.log("RET_USER_NUMBERS_FORWARDING");
+            t.rcSdk.platform().get(
+                '/account/~/extension/~/forwarding-number'
+            ).then(function(response2) {
+                console.log("USER_NUMBERS_FORWARDING: " + response2.text());
+                if ('records' in response2.json) {
+                    userInfo['rcUserFowardingNumbers'] = response2.json['records'];
+                }
+                t.setUserInfo(userInfo);
+                var userJson = JSON.stringify(userInfo);
+                console.log(userJson);
+            })
+        })
+    }
+    t.retrieveAndSetUserNumbersOld = function() {
         var debug = true;
         console.log("RET_USER_NUMBERS_FORWARDING");
         t.rcSdk.platform().get(
@@ -259,7 +309,7 @@ function rcDemoAuth(rcDemoCore) {
     ];
     t.getAuthData = function() {
         var authJson = window.localStorage.getItem(t.lsKeyAuth);
-        console.log("READ_AUTH_DATA: " + authData);
+        console.log("GET_AUTH_DATA: [" + t.lsKeyAuth + "] " + authJson);
         if (!authJson || authJson.length<1 || authJson == 'undefined') {
             return {};
         }
@@ -268,7 +318,7 @@ function rcDemoAuth(rcDemoCore) {
     }
     t.setAuthData = function(authData) {
         window.localStorage.setItem(t.lsKeyAuth, JSON.stringify(authData));
-        console.log("SET_AUTH_DATA: " + JSON.stringify(authData));
+        console.log("SET_AUTH_DATA: [" + t.lsKeyAuth + "] " + JSON.stringify(authData));
         if ('access_token' in authData && authData['access_token'].length>0) {
             $('#appMessage').hide();
         } else {
@@ -312,7 +362,7 @@ function rcDemoAuth(rcDemoCore) {
     }
     t.pageAuthPopulate = function() {
         var authData = t.getAuthData();
-        console.log(JSON.stringify(authData));
+        console.log("POP_AUTH_DATA" + JSON.stringify(authData));
         var data = [
           {'sto': 'userpath_num', 'dom1': '#rc_act_link_usr', 'dom2': '#rcLinkUsername'},
           {'sto': 'userpath_ext', 'dom1': '#rc_act_link_ext', 'dom2': '#rcLinkExtension'},

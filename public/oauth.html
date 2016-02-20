@@ -56,6 +56,7 @@ function processOAuthRedirect(rcDemo) {
                 console.log("AUTH_RESPONSE_text: " + JSON.stringify(response.text()));
                 console.log("AUTH_RESPONSE__text: " + response._text);
                 var response_json = JSON.parse(response._text)
+                rcDemo.Core.retrieveStoreUserInfo();
                 rcDemo.Core.retrieveAndSetUserNumbers();
                 rcDemo.Auth.setAuthEvent('rcAuthSuccess');
                 rcDemo.Auth.setAuthData(response.json());

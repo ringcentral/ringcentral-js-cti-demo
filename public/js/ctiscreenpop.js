@@ -73,11 +73,11 @@ function rcCallWinMgr(rcSdk) {
         }
     }
     t.startSubscription = function() {
-        if (!t.rcSdk.platform().isTokenValid()) {
+        if (!t.rcSdk.platform().loggedIn()) {
             console.log("E_IS_NOT_AUTHORIZED__SKIP_SUBSCRIPTION");
             return;
         }
-        t.subscription = t.rcSdk.getSubscription();
+        t.subscription = t.rcSdk.createSubscription();
 
         t.subscription
             .on(t.subscription.events.notification, function(msg) {
@@ -97,7 +97,7 @@ function rcCallWinMgr(rcSdk) {
             .then();
     }
     t.endSubscription = function() {
-        if (t.rcSdk.platform.isTokenValid()) {
+        if (t.rcSdk.platform.loggedIn()) {
             if (t.subscription) {
                 t.subscription.remove({async: false});
             }

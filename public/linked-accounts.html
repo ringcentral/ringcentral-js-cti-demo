@@ -87,6 +87,7 @@ $(function() {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
         }).catch(function (e) {
+            console.log("NOT_LOGGED_IN: " + e);
             $('#appMessage').show();
             rcDemo.Auth.setAuthData({});
             rcDemo.Auth.pageAuthPopulate();

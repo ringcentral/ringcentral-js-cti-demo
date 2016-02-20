@@ -40,7 +40,7 @@ var rcCallWin = new rcCallWinMgr();
 
 $(function() {
     rcDemo.init();
-    rcDemo.Core.rcSdk.getPlatform().isAuthorized()
+    rcDemo.Core.rcSdk.platform().loggedIn()
         .then(function () {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
