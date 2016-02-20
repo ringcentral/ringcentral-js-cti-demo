@@ -47,9 +47,8 @@ $(function() {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
             bindClickToDialAndSms();
-            populateUserNumbers(rcDemo,'rcDemoSmsFrom','rcDemoSmsFromWrap');
-            populateUserNumbers(rcDemo,'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
-            //populateUserNumbersOld(rcDemo);
+            populateUserNumbers(rcDemo, 'phoneNumbers', 'SmsSender', 'rcDemoSmsFrom','rcDemoSmsFromWrap');
+            populateUserNumbers(rcDemo, 'forwardingNumbers', 'CallForwarding', 'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
         }).catch(function (e) {
             $('#appMessage').show();
         })
@@ -367,9 +366,15 @@ platform.post('/account/~/extension/~/sms', {
   <table border="0" style="width:100%">
     <tr>
       <td>
-        Caller ID:
+        From:
       </td>
       <td id="rcDemoRingOutFromWrap"></td>
+    </tr>
+    <tr>
+      <td>
+        Caller ID:
+      </td>
+      <td id="rcDemoRingOutCallerIdWrap"></td>
     </tr>
     <tr>
       <td>
@@ -392,16 +397,34 @@ platform.post('/account/~/extension/~/sms', {
 </div>
 <script>
 
-function populateUserNumbers(rcDemo,elementId,parentId) {
+function populateUserNumbers(rcDemo, numberKey, feature, elementId, parentId) {
     console.log("POP_NUMBERS");
     var userInfo = rcDemo.Core.getUserInfo();
-    if ('rcUserNumbers' in userInfo && userInfo['rcUserNumbers'].length>0) {
+    console.log('USER_INFO ' + userInfo);
+    if (numberKey in userInfo && userInfo[numberKey].length>0) {
         var select = $('<select>').attr('id',elementId);
-        for (var i=0,l=userInfo['rcUserNumbers'].length;i<l;i++) {
-            var num = userInfo['rcUserNumbers'][i];
+        for (var i=0,l=userInfo[numberKey].length;i<l;i++) {
+            var num = userInfo[numberKey][i];
+            if (feature.length > 0) {
+              var features = num['features'];
+              var found = false;
+              for (var j=0,m=features.length;j<m;j++) {
+                if (feature == features[j]) {
+                  found = true;
+                }
+              }
+              if (!found) {
+                continue;
+              }
+            }
+            var suffix = '';
+            if ('label' in num) {
+              suffix = ' - ' + num['label'];
+            }
+            var display = num['phoneNumberNational'] + suffix;
             var option = $('<option>')
-                .attr('value', num['rcNumberE164'])
-                .append(num['rcNumberNational'] + ' - ' + num['rcLabel'])
+                .attr('value', num['phoneNumber'])
+                .append(display)
             if (i==0) {
                 option.prop('selected',true);
             }

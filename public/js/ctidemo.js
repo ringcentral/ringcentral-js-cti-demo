@@ -24,6 +24,60 @@ var rcPgCfgGen = {
   ]
 };
 
+function rcUser(info, rcSdk, lsKey, lsEnabled) {
+    var t = this;
+    t.info = info;
+    t.rcSdk = rcSdk;
+    t.lsKey = lsKey;
+    t.lsEnabled = lsEnabled;
+    t.retrieveNumbers = function() {
+        console.log("USR_RET_NUMBERS");
+        console.log("USR_RET_NUMBERS_PHONE");
+        t.rcSdk.platform().get(
+            '/account/~/extension/~/phone-number'
+        ).then(function(response) {
+            console.log("USR_SUC_NUMBERS_PHONE_2: " + response.text());
+            var json = JSON.stringify(response.json());
+            var data = response.json();
+            if ('records' in response.json()) {
+                t.info['phoneNumbers'] = t.inflateNumbers(
+                    response.json()['records']
+                );
+            }
+            console.log("USR_RET_USER_NUMBERS_FORWARDING");
+            t.rcSdk.platform().get(
+                '/account/~/extension/~/forwarding-number'
+            ).then(function(response2) {
+                console.log("USR_SUC_NUMBERS_FORWARDING: " + response2.text());
+                if ('records' in response2.json()) {
+                    t.info['forwardingNumbers'] = t.inflateNumbers(
+                        response2.json()['records']
+                    );
+                }
+                if (t.lsEnabled) {
+                    t.info = (typeof t.info !== 'undefined' && t.info != null) ? t.info : {};
+                    var json = JSON.stringify(t.info);
+                    window.localStorage.setItem(t.lsKey, JSON.stringify(t.info));
+                    console.log('USR_SET_USER_INFO [' + t.lsKey + '] ' + json);
+                }
+                var userJson = JSON.stringify(t.info);
+                console.log('USR_USER_JSON: ' + userJson);
+            }).catch(function(e) {
+                console.log('USR_FORWARDING_ERROR ' + e);
+            })
+        })
+    }
+    t.inflateNumbers = function(numbers) {
+        for (var i=0,l=numbers.length;i<l;i++) {
+            if ('phoneNumber' in numbers[i]) {
+                var e164 = numbers[i]['phoneNumber'];
+                numbers[i]['phoneNumberNational'] = phoneUtils.formatNational(e164, 'us');
+            }
+        }
+        return numbers;
+    }
+}
+
 function rcDemo(rcPgCfgGen, rcPgCfgPg) {
     var t=this;
     console.log("RCDEMO_INIT_S1");
@@ -116,7 +170,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         } else {
             userInfo = JSON.parse(json);
         }
-        console.log('GET_USER_INFO_FORM_LOCAL_STORAGE: ' + json);
+        console.log('GET_USER_INFO_FROM_LOCAL_STORAGE [' + t.lsKeyUser + '] ' + json);
         return userInfo;
     }
     t.retrieveStoreUserInfo = function() {
@@ -210,31 +264,9 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         return t.rcPgCfgGen['demoConfig']['url']['rcServerSandbox'];
     }
     t.retrieveAndSetUserNumbers = function() {
-        console.log("RET_USER_NUMBERS");
-        console.log("RET_USER_NUMBERS_PHONE");
-        t.rcSdk.platform().get(
-            '/account/~/extension/~/phone-number'
-        ).then(function(response) {
-            console.log("USER_NUMBERS_PHONE: " + response.text());
-            var json = JSON.stringify(response.json);
-            var userInfo = t.getUserInfo();
-            if ('records' in response.json) {
-                userInfo['rcUserPhoneNumbers'] = response.json['records'];
-            }
-
-            console.log("RET_USER_NUMBERS_FORWARDING");
-            t.rcSdk.platform().get(
-                '/account/~/extension/~/forwarding-number'
-            ).then(function(response2) {
-                console.log("USER_NUMBERS_FORWARDING: " + response2.text());
-                if ('records' in response2.json) {
-                    userInfo['rcUserFowardingNumbers'] = response2.json['records'];
-                }
-                t.setUserInfo(userInfo);
-                var userJson = JSON.stringify(userInfo);
-                console.log(userJson);
-            })
-        })
+        var info = t.getUserInfo();
+        var user = new rcUser({}, t.rcSdk, 'rcUsrInfo', true);
+        user.retrieveNumbers();
     }
     t.retrieveAndSetUserNumbersOld = function() {
         var debug = true;
@@ -590,7 +622,7 @@ function rcDemoCallLog(rcSdk) {
             var recording = '';
             if ('recording' in call && 'contentUri' in call['recording']) {
                 var uri = call['recording']['contentUri'];
-                var uriAc = rcsdk.platform().apiUrl(uri, {addToken: true});
+                var uriAc = rcsdk.platform().createUrl(uri, {addToken: true});
                 console.log(uri);
                 console.log(uriAc);
                 recording = $('<audio>').attr('controls', 'controls').append(
@@ -701,6 +733,10 @@ function rcDemoSms(rcDemoCore) {
     t.rcDemoCore = rcDemoCore
     t.rcSdk = t.rcDemoCore.rcSdk;
     t.sendMessage = function(from, to, text) {
+        if (text.length < 0) {
+            alert('Please enter text to send');
+            return;
+        }
         var platform = t.rcSdk.platform();
         from = phoneUtils.formatE164(from,'us');
         to = phoneUtils.formatE164(to,'us');        
@@ -711,9 +747,9 @@ function rcDemoSms(rcDemoCore) {
             ],
             text: text
         }).then(function(response) {
-            console.log('SMS_SEND_Success: ' + response.data.id);
+            console.log('SMS_SEND_Success: ' + response.json().id);
         }).catch(function(e) {
-            console.log('SMS_SEND_Error: ' + e.message);
+            console.log('SMS_SEND_Error: ' + e);
         });
     }
 }
