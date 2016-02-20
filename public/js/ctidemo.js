@@ -516,28 +516,29 @@ function ringOutHelper(rcsdk) {
     t.rcsdk = rcsdk;
     t.init = function() {
         t.platform = t.rcsdk.platform();
-        t.Ringout = t.rcsdk.getRingoutHelper(); // this is the helper
-        t.Utils = rcsdk.getUtils();
-        t.Log = rcsdk.getLog();
+        var helpers = RingCentral.Helpers;
+        t.Ringout = helpers.ringout();
+        // t.Utils = rcsdk.getUtils();
+        t.Utils = helpers.utils;
         t.timeout = null; // reference to timeout object
         t.ringout = {};
     }
     t.handleError = function(e) {
-        t.Log.error(e);
-        console.log(e.message);
+        console.log("ERROR: " + e);
     }
     t.create = function(unsavedRingout) {
         console.log("CREATE " + JSON.stringify(unsavedRingout));
         t.platform
-            .apiCall(t.Ringout.saveRequest(unsavedRingout))
+            .send(t.Ringout.saveRequest(unsavedRingout))
             .then(function(response) {
-
-                t.Utils.extend(t.ringout, response.data);
-                t.Log.info('First status:', t.ringout.status.callStatus);
+                console.log('RINGOUT_CALL_SUCCESS');
+                //t.Utils.extend(t.ringout, response.data);
+                //console.log('Info: First status:', t.ringout.status.callStatus);
                 //t.timeout = t.Utils.poll(update, 500, t.timeout);
-
             })
-            .catch(t.handleError);
+            .catch(function(e) {
+                console.log('RINGOUT_ERROR: ' + e.message);
+            });
     }
     t.init();
 }
