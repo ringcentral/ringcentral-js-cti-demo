@@ -26,9 +26,15 @@ Since this runs live on GitHub Pages, you can run this demo without any server-s
 
 You can also run this demo on any webserver by adding the `public` directory to the server's html directory. This may be useful if you wish to edit the pages. There is no need to run a database as the demo stores all necessary data using HTML5 Local Storage (e.g. `window.localStorage`). Instructions are provided below for Node.js http-server as one easy approach for this.
 
-### Dependencies
+### Installation
 
-Aside for the RingCentral for Desktop softphone, all dependencies are either built-in to the demo repo or accessed online via CDNs. There is no need to separately install depdencies such as JavaScript and CSS files.
+```sh
+$ git clone https://github.com/ringcentral/ringcentral-cti-demo-js
+$ cd ringcentral-cti-demo-js
+$ bower install ringcentral --save
+```
+
+The included `.bowerrc` file will save components to the `public/components` directory.
 
 ### Using Node.js http-server
 
