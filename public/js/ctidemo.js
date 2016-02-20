@@ -545,25 +545,24 @@ function ringOutHelper(rcsdk) {
 function rcDemoCallLog(rcSdk) {
     var t=this;
     t.rcSdk = rcSdk;
-    t.refreshCallLogTable = function() {
-
-    }
+    t.refreshCallLogTable = function() {}
     t.populateRecords = function() {
         var rcsdk = t.rcSdk;
         var platform = rcsdk.platform();
         var calls = [];
-        var Call = rcsdk.getCallHelper();
+        var Call = helpers.call();
         // This call may be repeated when needed, for example as a response to incoming Subscription
-        platform.apiCall(Call.loadRequest(null, {
+        platform.send(Call.loadRequest(null, {
             query: { // this can be omitted
                 page: 1,
                 perPage: 10
-            },
+            }
         })).then(function(response) {
-            console.log(repsonse.text());
-            calls = Call.merge(calls, response.data.records); // safely merge existing active calls with new ones
+            console.log("RESPONSE_CALLS: " + response.text());
+            calls = Call.merge(calls, response.json().records); // safely merge existing active calls with new ones
             t.populateCalls(calls);
         }).catch(function(e) {
+            console.log("E_RESPONSE_CALL_LOG: " + e);
             alert('Recent Calls Error: ' + e.message);
         });
     }
@@ -705,13 +704,11 @@ function rcDemoSms(rcDemoCore) {
         from = phoneUtils.formatE164(from,'us');
         to = phoneUtils.formatE164(to,'us');        
         platform.post('/account/~/extension/~/sms', {
-            body: {
-                from: {phoneNumber:from}, // Your sms-enabled phone number
-                to: [
-                    {phoneNumber:to} // Second party's phone number
-                ],
-                text: text
-            }
+            from: {phoneNumber:from}, // Your sms-enabled phone number
+            to: [
+                {phoneNumber:to} // Second party's phone number
+            ],
+            text: text
         }).then(function(response) {
             console.log('SMS_SEND_Success: ' + response.data.id);
         }).catch(function(e) {

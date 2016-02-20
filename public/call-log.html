@@ -22,6 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pubnub/3.7.7/pubnub.min.js"></script>
     <script src="./components/ringcentral/build/ringcentral.min.js"></script>
+    <script src="./components/ringcentral-helpers/build/ringcentral-helpers.min.js"></script>
     <!-- Demo scripts -->
     <link rel="stylesheet" href="./css/fontawesome-more.css">
     <link rel="stylesheet" href="./css/ctidemo.css">
@@ -39,6 +40,8 @@ var rcsdk = rcDemo.Core.rcSdk;
 var rcCallWin = new rcCallWinMgr();
 var rcCallLog = new rcDemoCallLog();
 
+var helpers = RingCentral.Helpers;
+
 $(function() {
     rcDemo.init();
     rcCallLog.rcSdk = rcDemo.Core.rcSdk;
@@ -48,6 +51,7 @@ $(function() {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();  
         }).catch(function (e) {
+            console.log("ERROR: " + e)
             $('#appMessage').show();
         })
     $(window).unload(function() {

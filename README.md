@@ -32,6 +32,7 @@ You can also run this demo on any webserver by adding the `public` directory to 
 $ git clone https://github.com/ringcentral/ringcentral-cti-demo-js
 $ cd ringcentral-cti-demo-js
 $ bower install ringcentral --save
+$ bower install ringcentral-helpers --save
 ```
 
 The included `.bowerrc` file will save components to the `public/components` directory.
@@ -103,4 +104,5 @@ Please report these on [GitHub](https://github.com/ringcentral/ringcentral-cti-d
 
 RingCentral SDK is available under an MIT-style license. See [LICENSE.txt](LICENSE.txt) for details.
 
-RingCentral SDK &copy; 2015 by RingCentral
+RingCentral SDK &copy; 2016 by RingCentral
+RingCentral SDK &copy; 2015 by John Wang
