@@ -102,7 +102,8 @@ Please report these on [GitHub](https://github.com/ringcentral/ringcentral-cti-d
 
 ## License
 
-RingCentral SDK is available under an MIT-style license. See [LICENSE.txt](LICENSE.txt) for details.
+RingCentral CTI Demo JS is available under an MIT-style license. See [LICENSE.txt](LICENSE.txt) for details.
 
-RingCentral SDK &copy; 2016 by RingCentral
-RingCentral SDK &copy; 2015 by John Wang
+RingCentral CTI Demo JS &copy; 2016 by RingCentral
+
+RingCentral CTI Demo JS &copy; 2015 by John Wang
