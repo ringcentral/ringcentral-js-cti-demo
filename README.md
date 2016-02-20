@@ -84,15 +84,15 @@ Project Repo
 
 RingCentral SDK for JavaScript
 
-* https://github.com/ringcentral/js-sdk
+* https://github.com/ringcentral/ringcentral-js
 
-RingCentral API Docs
+RingCentral API Developer and Reference Guide
 
-* https://developers.ringcentral.com/library.html
+* https://developer.ringcentral.com/api-docs/
 
 RingCentral API Explorer
 
-* http://ringcentral.github.io/api-explorer
+* https://developer.ringcentral.com/api-explorer/
 
 ## Contributions
 
