@@ -73,7 +73,7 @@ function rcCallWinMgr(rcSdk) {
         }
     }
     t.startSubscription = function() {
-        if (!t.rcSdk.getPlatform().isTokenValid()) {
+        if (!t.rcSdk.platform().isTokenValid()) {
             console.log("E_IS_NOT_AUTHORIZED__SKIP_SUBSCRIPTION");
             return;
         }
@@ -97,7 +97,7 @@ function rcCallWinMgr(rcSdk) {
             .then();
     }
     t.endSubscription = function() {
-        if (t.rcSdk.getPlatform.isTokenValid()) {
+        if (t.rcSdk.platform.isTokenValid()) {
             if (t.subscription) {
                 t.subscription.remove({async: false});
             }

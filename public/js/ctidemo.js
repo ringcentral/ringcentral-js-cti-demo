@@ -116,7 +116,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         } else {
             userInfo = JSON.parse(json);
         }
-        //console.log('GET_USER_INFO ' + json);
+        console.log('GET_USER_INFO_FORM_LOCAL_STORAGE: ' + json);
         return userInfo;
     }
     t.getUsername = function() {
@@ -140,12 +140,12 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
     t.setUserInfo = function(userInfo) {
         userInfo = (typeof userInfo !== 'undefined' && userInfo != null) ? userInfo : {};
         var json = JSON.stringify(userInfo);
-        //console.log('SET_USER_INFO ' + json);
+        console.log('SET_USER_INFO ' + json);
         window.localStorage.setItem(t.lsKeyUser, JSON.stringify(userInfo));
         t.populateDomUser();
     }
     t.setRcSdk = function(appInfo) {
-        t.rcSdk = new RCSDK({
+        t.rcSdk = new RingCentral.SDK({
             server: appInfo['server'],
             appKey: appInfo['rcAppKey'],
             appSecret: appInfo['rcAppSecret']
@@ -189,7 +189,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
     t.retrieveAndSetUserNumbers = function() {
         var debug = true;
         console.log("RET_USER_NUMBERS_FORWARDING");
-        t.rcSdk.getPlatform().get(
+        t.rcSdk.platform().get(
             '/account/~/extension/~/forwarding-number'
         ).then(function(response) {
             var json = JSON.stringify(response.json);
@@ -197,11 +197,13 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
             if ('records' in response.json) {
                 userInfo['rcUserForwardingNumbers'] = response.json['records'];
             }
-            t.rcSdk.getPlatform().get(
+            t.rcSdk.platform().get(
                 '/account/~'
             ).then(function(response) {
                 var data = response.json;
-                var json = JSON.stringify(response.json);
+                //var json = JSON.stringify(response.json); // error?
+                var json = response._text;
+                console.log("RES '/account/~':" + json);
                 var rcUserNumbers = [];
                 if ('rcUserForwardingNumbers' in userInfo) {
                     for (var i=0,l=userInfo['rcUserForwardingNumbers'].length;i<l;i++) {
@@ -228,7 +230,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
                 }  
                 userInfo['rcUserNumbers'] = rcUserNumbers;
                 t.setUserInfo(userInfo);
-                console.log("USER_NUMBERS: " + JSON.stringify(userInfo));
+                console.log("AUTHZ_USER_INFO: " + JSON.stringify(userInfo));
             })
         }).catch(function(e) {
             alert('Error: ' + e.message);
@@ -241,7 +243,7 @@ function rcDemoAuth(rcDemoCore) {
     t.lsKeyAuth  = 'rcAuthInfo';
     t.lsKeyEvent = 'rcAuthEvent';
     t.rcDemoCore = rcDemoCore;
-    t.rcPlatform = t.rcDemoCore.rcSdk.getPlatform();
+    t.rcPlatform = t.rcDemoCore.rcSdk.platform();
     t.debug = false;
     t.init = function() {
         console.log("INIT_AUTH");
@@ -257,8 +259,8 @@ function rcDemoAuth(rcDemoCore) {
     ];
     t.getAuthData = function() {
         var authJson = window.localStorage.getItem(t.lsKeyAuth);
-        //console.log("GOT_JSON " + authData);
-        if (!authJson || authJson.length<1) {
+        console.log("READ_AUTH_DATA: " + authData);
+        if (!authJson || authJson.length<1 || authJson == 'undefined') {
             return {};
         }
         var authData = JSON.parse(authJson);
@@ -266,6 +268,7 @@ function rcDemoAuth(rcDemoCore) {
     }
     t.setAuthData = function(authData) {
         window.localStorage.setItem(t.lsKeyAuth, JSON.stringify(authData));
+        console.log("SET_AUTH_DATA: " + JSON.stringify(authData));
         if ('access_token' in authData && authData['access_token'].length>0) {
             $('#appMessage').hide();
         } else {
@@ -319,7 +322,7 @@ function rcDemoAuth(rcDemoCore) {
           {'sto': 'refresh_token_expires_in', 'dom1': '#rc_act_link_acc', 'dom2': '#rcLinkRefreshTokenTtl'},
           {'sto': 'scope', 'dom1': '#rc_act_link_acc', 'dom2': '#rcLinkScope'}
         ];
-        for (var i=0;i<data.length;i++) {
+        for (var i=0; i<data.length; i++) {
             var sto = data[i]['sto'];
             if ('dom1' in data[i]) {
                 var dom1 = data[i]['dom1'];
@@ -462,7 +465,7 @@ function ringOutHelper(rcsdk) {
     var t=this;
     t.rcsdk = rcsdk;
     t.init = function() {
-        t.platform = t.rcsdk.getPlatform();
+        t.platform = t.rcsdk.platform();
         t.Ringout = t.rcsdk.getRingoutHelper(); // this is the helper
         t.Utils = rcsdk.getUtils();
         t.Log = rcsdk.getLog();
@@ -497,7 +500,7 @@ function rcDemoCallLog(rcSdk) {
     }
     t.populateRecords = function() {
         var rcsdk = t.rcSdk;
-        var platform = rcsdk.getPlatform();
+        var platform = rcsdk.platform();
         var calls = [];
         var Call = rcsdk.getCallHelper();
         // This call may be repeated when needed, for example as a response to incoming Subscription
@@ -507,6 +510,7 @@ function rcDemoCallLog(rcSdk) {
                 perPage: 10
             },
         })).then(function(response) {
+            console.log(repsonse.text());
             calls = Call.merge(calls, response.data.records); // safely merge existing active calls with new ones
             t.populateCalls(calls);
         }).catch(function(e) {
@@ -536,7 +540,7 @@ function rcDemoCallLog(rcSdk) {
             var recording = '';
             if ('recording' in call && 'contentUri' in call['recording']) {
                 var uri = call['recording']['contentUri'];
-                var uriAc = rcsdk.getPlatform().apiUrl(uri, {addToken: true});
+                var uriAc = rcsdk.platform().apiUrl(uri, {addToken: true});
                 console.log(uri);
                 console.log(uriAc);
                 recording = $('<audio>').attr('controls', 'controls').append(
@@ -647,7 +651,7 @@ function rcDemoSms(rcDemoCore) {
     t.rcDemoCore = rcDemoCore
     t.rcSdk = t.rcDemoCore.rcSdk;
     t.sendMessage = function(from, to, text) {
-        var platform = t.rcSdk.getPlatform();
+        var platform = t.rcSdk.platform();
         from = phoneUtils.formatE164(from,'us');
         to = phoneUtils.formatE164(to,'us');        
         platform.post('/account/~/extension/~/sms', {

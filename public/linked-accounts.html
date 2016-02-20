@@ -18,12 +18,10 @@
     <script src="./vendor/hideShowPassword/2.0.7/hideShowPassword.min.js"></script>
     <script src="./vendor/nathanhammond/libphonenumber/0.9.3/dist/libphonenumber.js"></script>
     <!-- RC SDK -->
-    <script src="./vendor/es6-promise-polyfill/1.0.0/promise.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/aes.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/sha256.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/components/mode-ecb.js"></script>
-    <script src="./vendor/pubnub/3.6.7/pubnub.js"></script>
-    <script src="./vendor/rcsdk/1.3.1/build/rc-sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.1.2/es6-promise.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pubnub/3.7.7/pubnub.min.js"></script>
+    <script src="./components/ringcentral/build/ringcentral.min.js"></script>
     <!-- Demo scripts -->
     <link rel="stylesheet" href="./css/fontawesome-more.css">
     <link rel="stylesheet" href="./css/ctidemo.css">
@@ -59,13 +57,12 @@ var rcCallWin = new rcCallWinMgr();
 function Auth3l(rcDemo) {
     var t=this;
     t.rcDemo = rcDemo;
-    //t.rcSdk = rcsdk;
-    //t.redirectUri;
+
     t.authorize = function() {
         var appInfo = t.rcDemo.Core.getAppInfo();
         var redirectUri = appInfo['rcAppRedirectUri']
         console.log("REDIRECT_URI " + redirectUri);
-        var urltoopen = t.rcDemo.Core.rcSdk.getPlatform().getAuthURL({
+        var urltoopen = t.rcDemo.Core.rcSdk.platform().authUrl({
             redirectUri: redirectUri
         })
         console.log("OAUTH3L_URI " + urltoopen);
@@ -85,7 +82,7 @@ $(function() {
     var appInfo = rcDemo.Core.getAppInfo();
     console.log('APPINFO LISTEN ' + JSON.stringify(appInfo));
     rcDemo.Auth3l = new Auth3l(rcDemo);
-    rcDemo.Core.rcSdk.getPlatform().isAuthorized()
+    rcDemo.Core.rcSdk.platform().loggedIn()
         .then(function () {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();

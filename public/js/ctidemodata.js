@@ -66,9 +66,4 @@ function rcDemoContacts(rcdCore) {
 	t.objectKey = function() {
 		return t.rcdCore.demoConfig.model.contacts['objectKey'];		
 	}
-
-
-
-
-
 }
