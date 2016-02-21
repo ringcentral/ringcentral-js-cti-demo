@@ -47,8 +47,12 @@ $(function() {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
             bindClickToDialAndSms();
-            populateUserNumbers(rcDemo, 'phoneNumbers', 'SmsSender', 'rcDemoSmsFrom','rcDemoSmsFromWrap');
-            populateUserNumbers(rcDemo, 'forwardingNumbers', 'CallForwarding', 'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
+            var user = new rcUser({}, rcDemo.Core.rcSdk, 'rcUsrInfo', true);
+            user.loadFromLocalStorage();
+
+            populateUserNumbers(user.smsFromNumbers(), 'rcDemoSmsFrom','rcDemoSmsFromWrap');
+            populateUserNumbers(user.ringOutFromNumbers(), 'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
+            //populateUserNumbers(user.ringOutCallerIdNumbers(), 'rcDemoRingOutCallerId','rcDemoRingOutCallerIdWrap');
         }).catch(function (e) {
             $('#appMessage').show();
         })
@@ -336,7 +340,7 @@ platform.post('/account/~/extension/~/sms', {
               <ol>  
                 <li><a href="https://developers.ringcentral.com">Developer Portal <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://developers.ringcentral.com/api-docs/latest/index.html">API Docs <i class="fa fa-external-link"></i></a></li>
-                <li><a href="http://ringcentral.github.io/api-explorer">API Explorer <i class="fa fa-external-link"></i></a></li>
+                <li><a href="https://developer.ringcentral.com/api-explorer/">API Explorer <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://github.com/ringcentral">SDKs <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://ringcentral.github.io/cti-tutorial">CTI Tutorial <i class="fa fa-external-link"></i></a></li>
               </ol>
@@ -370,7 +374,7 @@ platform.post('/account/~/extension/~/sms', {
       </td>
       <td id="rcDemoRingOutFromWrap"></td>
     </tr>
-    <tr>
+    <tr style="display:none">
       <td>
         Caller ID:
       </td>
@@ -389,7 +393,7 @@ platform.post('/account/~/extension/~/sms', {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="rcDemo.Call.createRingOutSimple($('#rcDemoRingOutFrom').val(),$('#rcDemoRingOutTo').val())">Call</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="rcDemo.Call.createRingOutSimple($('#rcDemoRingOutTo').val(),$('#rcDemoRingOutFrom').val(),$('#rcDemoRingOutCallerId').val())">Call</button>
       </div>
       </form>
     </div>
@@ -397,29 +401,15 @@ platform.post('/account/~/extension/~/sms', {
 </div>
 <script>
 
-function populateUserNumbers(rcDemo, numberKey, feature, elementId, parentId) {
+function populateUserNumbers(numbers, elementId, parentId) {
     console.log("POP_NUMBERS");
-    var userInfo = rcDemo.Core.getUserInfo();
-    console.log('USER_INFO ' + userInfo);
-    if (numberKey in userInfo && userInfo[numberKey].length>0) {
+    if (numbers.length > 0) {
         var select = $('<select>').attr('id',elementId);
-        for (var i=0,l=userInfo[numberKey].length;i<l;i++) {
-            var num = userInfo[numberKey][i];
-            if (feature.length > 0) {
-              var features = num['features'];
-              var found = false;
-              for (var j=0,m=features.length;j<m;j++) {
-                if (feature == features[j]) {
-                  found = true;
-                }
-              }
-              if (!found) {
-                continue;
-              }
-            }
+        for (var i=0,l=numbers.length;i<l;i++) {
+            var num = numbers[i];
             var suffix = '';
-            if ('label' in num) {
-              suffix = ' - ' + num['label'];
+            if ('uiLabel' in num) {
+              suffix = ' - ' + num['uiLabel'];
             }
             var display = num['phoneNumberNational'] + suffix;
             var option = $('<option>')

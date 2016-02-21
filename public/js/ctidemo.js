@@ -28,8 +28,14 @@ function rcUser(info, rcSdk, lsKey, lsEnabled) {
     var t = this;
     t.info = info;
     t.rcSdk = rcSdk;
+    t.rcSdkHelpers = RingCentral.Helpers;
     t.lsKey = lsKey;
     t.lsEnabled = lsEnabled;
+    t.loadFromLocalStorage = function() {
+        var json = window.localStorage.getItem(t.lsKey);
+        var data = JSON.parse(json);
+        t.info = data;
+    }
     t.retrieveNumbers = function() {
         console.log("USR_RET_NUMBERS");
         console.log("USR_RET_NUMBERS_PHONE");
@@ -75,6 +81,61 @@ function rcUser(info, rcSdk, lsKey, lsEnabled) {
             }
         }
         return numbers;
+    }
+    t.ringOutFromNumbers = function() {
+        var numbers = [];
+        if (! 'phoneNumbers' in t.info) {
+            return numbers;
+        }
+        numbers = t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({usageType: 'DirectNumber'}) );
+        var numbersMap = {};
+        for (var i=0,l=numbers.length;i<l;i++) {
+            var num = numbers[i]['phoneNumber'];
+            numbers[i]['uiLabel'] = 'Direct Number';
+            console.log("FRM: " + num);
+            numbersMap[num] = 1;
+        }
+        var forwarding = t.forwardingNumbers();
+        for (var i=0,l=forwarding.length;i<l;i++) {
+            var num = forwarding[i]['phoneNumber'];
+            console.log("FWD: " + num);
+            if (!(num in numbersMap)) {
+                forwarding[i]['uiLabel'] = forwarding[i]['label'];
+                console.log("PUSH " + num);
+                numbers.push(forwarding[i]);
+            }
+            console.log(JSON.stringify(numbers));
+        }
+        return numbers;
+    }
+    t.forwardingNumbers = function() {
+        if (! 'forwardingNumbers' in t.info) {
+            return [];
+        }
+        return t.info['forwardingNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['CallForwarding']}) );
+    }    
+    t.ringOutCallerIdNumbers = function() {
+        if (! 'phoneNumbers' in t.info) {
+            return [];
+        }
+        var usageTypeToUiLabel = { 'DirectNumber' : 'Direct Number', 'MainCompanyNumber': 'Main Company Number'};
+        var numbers = t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['CallerId']}) );
+        for (var i=0,l=numbers.length;i<l;i++) {
+            if ('usageType' in numbers[i]) {
+                if (numbers[i]['usageType'] in usageTypeToUiLabel) {
+                    numbers[i]['uiLabel'] = usageTypeToUiLabel[numbers[i]['usageType']];
+                } else {
+                    numbers[i]['uiLabel'] = numbers[i]['usageType'];
+                }
+            }
+        }
+        return numbers;
+    }
+    t.smsFromNumbers = function() {
+        if (! 'phoneNumbers' in t.info) {
+            return [];
+        }
+        return t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['SmsSender']}) );
     }
 }
 
@@ -527,13 +588,18 @@ function rcDemoCall(rcDemoCore) {
         roHelper.create(unsavedRingout);
         return roHelper;
     }
-    t.createRingOutSimple = function(from, to, options) {
+    t.createRingOutSimple = function(to, from, callerId, options) {
         if (!options) {
             options = {
-                from: {phoneNumber: from},
                 to:   {phoneNumber: to},
                 playPrompt: true
             };
+        }
+        if (from != undefined && from.length>0) {
+            options['from'] = {phoneNumber: from};
+        }
+        if (callerId != undefined && callerId.length>0) {
+            options['callerId'] = {phoneNumber: callerId};
         }
         console.log("FROM " + from);
         console.log("TO " + to);
