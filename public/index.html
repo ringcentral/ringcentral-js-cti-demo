@@ -20,7 +20,7 @@
     <!-- RC SDK -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.1.2/es6-promise.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pubnub/3.7.7/pubnub.min.js"></script>
+    <script src="https://cdn.pubnub.com/pubnub-3.7.13.min.js"></script>
     <script src="./components/ringcentral/build/ringcentral.min.js"></script>
     <!-- Demo scripts -->
     <link rel="stylesheet" href="./css/fontawesome-more.css">
@@ -45,6 +45,7 @@ $(function() {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
         }).catch(function (e) {
+            console.log('START_ERROR ' + e);
             $('#appMessage').show();
         })
 /*
@@ -55,11 +56,6 @@ $(function() {
     });*/
 });
 
-/*
-$(window).on('beforeunload', function() {
-  return 'Your own message goes here...';
-});
-*/
     </script>
   </head>
   <body role="document">
