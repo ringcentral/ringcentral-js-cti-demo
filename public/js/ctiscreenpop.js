@@ -117,7 +117,7 @@ function rcCallWinMgr(rcSdk) {
         console.log('createSubscription');
     }
     t.endSubscription = function() {
-        if (t.rcSdk.platform.loggedIn()) {
+        if (t.rcSdk.platform().loggedIn()) {
             if (t.subscription) {
                 t.subscription.remove({async: false});
             }
