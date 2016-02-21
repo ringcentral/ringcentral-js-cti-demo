@@ -14,16 +14,15 @@
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha256-k2/8zcNbxVIh5mnQ52A0r3a6jAgMGxFJFE2707UxGCk= sha512-ZV9KawG2Legkwp3nAlxLIVFudTauWuBpC10uEafMHYL0Sarrz5A7G79kXh5+5+woxQ5HM559XX2UZjMJ36Wplg==" crossorigin="anonymous">
     <!--link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/default.min.css" rel="stylesheet"-->
     <link href="./css/highlight.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
     <script src="./vendor/hideShowPassword/2.0.7/hideShowPassword.min.js"></script>
     <script src="./vendor/nathanhammond/libphonenumber/0.9.3/dist/libphonenumber.js"></script>
     <!-- RC SDK -->
-    <script src="./vendor/es6-promise-polyfill/1.0.0/promise.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/aes.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/sha256.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/components/mode-ecb.js"></script>
-    <script src="./vendor/pubnub/3.6.7/pubnub.js"></script>
-    <script src="./vendor/rcsdk/1.2.1/build/rc-sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.1.2/es6-promise.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.min.js"></script>
+    <script src="https://cdn.pubnub.com/pubnub-3.7.13.min.js"></script>
+    <script src="./components/ringcentral/build/ringcentral.min.js"></script>
+    <script src="./components/ringcentral-helpers/build/ringcentral-helpers.min.js"></script>
     <!-- Demo scripts -->
     <link rel="stylesheet" href="./css/fontawesome-more.css">
     <link rel="stylesheet" href="./css/ctidemo.css">
@@ -31,24 +30,29 @@
     <script src="./js/ctidemo.js"></script>
     <script src="./js/ctiscreenpop.js"></script>
     <script>
+
 var rcPgCfgPg = {
   rcPgTitle: 'Contacts',
   rcPgCrumbStub: 'contacts'
 };
+
 rcDemo = new rcDemo(rcPgCfgGen, rcPgCfgPg);
 var rcsdk = rcDemo.Core.rcSdk;
 var rcCallWin = new rcCallWinMgr();
 
 $(function() {
     rcDemo.init();
-    rcDemo.Core.rcSdk.getPlatform().isAuthorized()
+    rcDemo.Core.rcSdk.platform().loggedIn()
         .then(function () {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
             bindClickToDialAndSms();
-            populateUserNumbers(rcDemo,'rcDemoSmsFrom','rcDemoSmsFromWrap');
-            populateUserNumbers(rcDemo,'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
-            //populateUserNumbersOld(rcDemo);
+            var user = new rcUser({}, rcDemo.Core.rcSdk, 'rcUsrInfo', true);
+            user.loadFromLocalStorage();
+
+            populateUserNumbers(user.smsFromNumbers(), 'rcDemoSmsFrom','rcDemoSmsFromWrap');
+            populateUserNumbers(user.ringOutFromNumbers(), 'rcDemoRingOutFrom','rcDemoRingOutFromWrap');
+            //populateUserNumbers(user.ringOutCallerIdNumbers(), 'rcDemoRingOutCallerId','rcDemoRingOutCallerIdWrap');
         }).catch(function (e) {
             $('#appMessage').show();
         })
@@ -309,13 +313,11 @@ ringOutHelper.create({
 
 <pre><code class="javascript">
 platform.post('/account/~/extension/~/sms', {
-    body: {
-        from: {phoneNumber:from}, // Your sms-enabled phone number
-        to: [
-            {phoneNumber:to} // Second party's phone number
-        ],
-        text: text
-    }
+    from: {phoneNumber:from}, // Your sms-enabled phone number
+    to: [
+        {phoneNumber:to} // Second party's phone number
+    ],
+    text: text
 }).then(function(response) {
     console.log('SMS Success: ' + response.data.id);
 }).catch(function(e) {
@@ -338,7 +340,7 @@ platform.post('/account/~/extension/~/sms', {
               <ol>  
                 <li><a href="https://developers.ringcentral.com">Developer Portal <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://developers.ringcentral.com/api-docs/latest/index.html">API Docs <i class="fa fa-external-link"></i></a></li>
-                <li><a href="http://ringcentral.github.io/api-explorer">API Explorer <i class="fa fa-external-link"></i></a></li>
+                <li><a href="https://developer.ringcentral.com/api-explorer/">API Explorer <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://github.com/ringcentral">SDKs <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://ringcentral.github.io/cti-tutorial">CTI Tutorial <i class="fa fa-external-link"></i></a></li>
               </ol>
@@ -368,9 +370,15 @@ platform.post('/account/~/extension/~/sms', {
   <table border="0" style="width:100%">
     <tr>
       <td>
-        Caller ID:
+        From:
       </td>
       <td id="rcDemoRingOutFromWrap"></td>
+    </tr>
+    <tr style="display:none">
+      <td>
+        Caller ID:
+      </td>
+      <td id="rcDemoRingOutCallerIdWrap"></td>
     </tr>
     <tr>
       <td>
@@ -385,7 +393,7 @@ platform.post('/account/~/extension/~/sms', {
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="rcDemo.Call.createRingOutSimple($('#rcDemoRingOutFrom').val(),$('#rcDemoRingOutTo').val())">Call</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="rcDemo.Call.createRingOutSimple($('#rcDemoRingOutTo').val(),$('#rcDemoRingOutFrom').val(),$('#rcDemoRingOutCallerId').val())">Call</button>
       </div>
       </form>
     </div>
@@ -393,16 +401,20 @@ platform.post('/account/~/extension/~/sms', {
 </div>
 <script>
 
-function populateUserNumbers(rcDemo,elementId,parentId) {
+function populateUserNumbers(numbers, elementId, parentId) {
     console.log("POP_NUMBERS");
-    var userInfo = rcDemo.Core.getUserInfo();
-    if ('rcUserNumbers' in userInfo && userInfo['rcUserNumbers'].length>0) {
+    if (numbers.length > 0) {
         var select = $('<select>').attr('id',elementId);
-        for (var i=0,l=userInfo['rcUserNumbers'].length;i<l;i++) {
-            var num = userInfo['rcUserNumbers'][i];
+        for (var i=0,l=numbers.length;i<l;i++) {
+            var num = numbers[i];
+            var suffix = '';
+            if ('uiLabel' in num) {
+              suffix = ' - ' + num['uiLabel'];
+            }
+            var display = num['phoneNumberNational'] + suffix;
             var option = $('<option>')
-                .attr('value', num['rcNumberE164'])
-                .append(num['rcNumberNational'] + ' - ' + num['rcLabel'])
+                .attr('value', num['phoneNumber'])
+                .append(display)
             if (i==0) {
                 option.prop('selected',true);
             }

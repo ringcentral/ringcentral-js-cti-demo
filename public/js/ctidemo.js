@@ -24,6 +24,121 @@ var rcPgCfgGen = {
   ]
 };
 
+function rcUser(info, rcSdk, lsKey, lsEnabled) {
+    var t = this;
+    t.info = info;
+    t.rcSdk = rcSdk;
+    t.rcSdkHelpers = RingCentral.Helpers;
+    t.lsKey = lsKey;
+    t.lsEnabled = lsEnabled;
+    t.loadFromLocalStorage = function() {
+        var json = window.localStorage.getItem(t.lsKey);
+        var data = JSON.parse(json);
+        t.info = data;
+    }
+    t.retrieveNumbers = function() {
+        console.log("USR_RET_NUMBERS");
+        console.log("USR_RET_NUMBERS_PHONE");
+        t.rcSdk.platform().get(
+            '/account/~/extension/~/phone-number'
+        ).then(function(response) {
+            console.log("USR_SUC_NUMBERS_PHONE_2: " + response.text());
+            var json = JSON.stringify(response.json());
+            var data = response.json();
+            if ('records' in response.json()) {
+                t.info['phoneNumbers'] = t.inflateNumbers(
+                    response.json()['records']
+                );
+            }
+            console.log("USR_RET_USER_NUMBERS_FORWARDING");
+            t.rcSdk.platform().get(
+                '/account/~/extension/~/forwarding-number'
+            ).then(function(response2) {
+                console.log("USR_SUC_NUMBERS_FORWARDING: " + response2.text());
+                if ('records' in response2.json()) {
+                    t.info['forwardingNumbers'] = t.inflateNumbers(
+                        response2.json()['records']
+                    );
+                }
+                if (t.lsEnabled) {
+                    t.info = (typeof t.info !== 'undefined' && t.info != null) ? t.info : {};
+                    var json = JSON.stringify(t.info);
+                    window.localStorage.setItem(t.lsKey, JSON.stringify(t.info));
+                    console.log('USR_SET_USER_INFO [' + t.lsKey + '] ' + json);
+                }
+                var userJson = JSON.stringify(t.info);
+                console.log('USR_USER_JSON: ' + userJson);
+            }).catch(function(e) {
+                console.log('USR_FORWARDING_ERROR ' + e);
+            })
+        })
+    }
+    t.inflateNumbers = function(numbers) {
+        for (var i=0,l=numbers.length;i<l;i++) {
+            if ('phoneNumber' in numbers[i]) {
+                var e164 = numbers[i]['phoneNumber'];
+                numbers[i]['phoneNumberNational'] = phoneUtils.formatNational(e164, 'us');
+            }
+        }
+        return numbers;
+    }
+    t.ringOutFromNumbers = function() {
+        var numbers = [];
+        if (! 'phoneNumbers' in t.info) {
+            return numbers;
+        }
+        numbers = t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({usageType: 'DirectNumber'}) );
+        var numbersMap = {};
+        for (var i=0,l=numbers.length;i<l;i++) {
+            var num = numbers[i]['phoneNumber'];
+            numbers[i]['uiLabel'] = 'Direct Number';
+            console.log("FRM: " + num);
+            numbersMap[num] = 1;
+        }
+        var forwarding = t.forwardingNumbers();
+        for (var i=0,l=forwarding.length;i<l;i++) {
+            var num = forwarding[i]['phoneNumber'];
+            console.log("FWD: " + num);
+            if (!(num in numbersMap)) {
+                forwarding[i]['uiLabel'] = forwarding[i]['label'];
+                console.log("PUSH " + num);
+                numbers.push(forwarding[i]);
+            }
+            console.log(JSON.stringify(numbers));
+        }
+        return numbers;
+    }
+    t.forwardingNumbers = function() {
+        if (! 'forwardingNumbers' in t.info) {
+            return [];
+        }
+        return t.info['forwardingNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['CallForwarding']}) );
+    }    
+    t.ringOutCallerIdNumbers = function() {
+        if (! 'phoneNumbers' in t.info) {
+            return [];
+        }
+        var usageTypeToUiLabel = { 'DirectNumber' : 'Direct Number', 'MainCompanyNumber': 'Main Company Number'};
+        var numbers = t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['CallerId']}) );
+        for (var i=0,l=numbers.length;i<l;i++) {
+            if ('usageType' in numbers[i]) {
+                if (numbers[i]['usageType'] in usageTypeToUiLabel) {
+                    numbers[i]['uiLabel'] = usageTypeToUiLabel[numbers[i]['usageType']];
+                } else {
+                    numbers[i]['uiLabel'] = numbers[i]['usageType'];
+                }
+            }
+        }
+        return numbers;
+    }
+    t.smsFromNumbers = function() {
+        if (! 'phoneNumbers' in t.info) {
+            return [];
+        }
+        return t.info['phoneNumbers'].filter( t.rcSdkHelpers.phoneNumber().filter({features: ['SmsSender']}) );
+    }
+}
+
 function rcDemo(rcPgCfgGen, rcPgCfgPg) {
     var t=this;
     console.log("RCDEMO_INIT_S1");
@@ -116,8 +231,31 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         } else {
             userInfo = JSON.parse(json);
         }
-        //console.log('GET_USER_INFO ' + json);
+        console.log('GET_USER_INFO_FROM_LOCAL_STORAGE [' + t.lsKeyUser + '] ' + json);
         return userInfo;
+    }
+    t.retrieveStoreUserInfo = function() {
+        t.rcSdk.platform().get(
+            '/account/~/'
+        ).then(function(response) {
+            var data = response.json();
+            var user = t.getUserInfo();
+            user['rcUserUsername'] = data['mainNumber'];
+            t.setUserInfo(user);
+            var json = JSON.stringify(response.json());
+            console.log("ACCOUNT INFO: " + json);
+
+            t.rcSdk.platform().get(
+                '/account/~/extension/~/'
+            ).then(function(response) {
+                var data = response.json();
+                var user = t.getUserInfo();
+                user['rcUserExtension'] = data['extensionNumber'];
+                t.setUserInfo(user);
+                var json = JSON.stringify(response.json());
+                console.log("EXTENSION INFO: " + json);
+            });
+        })
     }
     t.getUsername = function() {
         var userInfo = t.getUserInfo();
@@ -132,7 +270,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
             appInfo['server'] = t.rcServerSandbox();
         }
         var json = JSON.stringify(appInfo);
-        //console.log('SET_APP_INFO ' + json);
+        console.log('SET_APP_INFO ' + json);
         window.localStorage.setItem(t.lsKeyApp, JSON.stringify(appInfo));
         t.populateDomApp();
         t.setRcSdk(appInfo);
@@ -140,12 +278,12 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
     t.setUserInfo = function(userInfo) {
         userInfo = (typeof userInfo !== 'undefined' && userInfo != null) ? userInfo : {};
         var json = JSON.stringify(userInfo);
-        //console.log('SET_USER_INFO ' + json);
+        console.log('SET_USER_INFO ' + json);
         window.localStorage.setItem(t.lsKeyUser, JSON.stringify(userInfo));
         t.populateDomUser();
     }
     t.setRcSdk = function(appInfo) {
-        t.rcSdk = new RCSDK({
+        t.rcSdk = new RingCentral.SDK({
             server: appInfo['server'],
             appKey: appInfo['rcAppKey'],
             appSecret: appInfo['rcAppSecret']
@@ -187,9 +325,14 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
         return t.rcPgCfgGen['demoConfig']['url']['rcServerSandbox'];
     }
     t.retrieveAndSetUserNumbers = function() {
+        var info = t.getUserInfo();
+        var user = new rcUser({}, t.rcSdk, 'rcUsrInfo', true);
+        user.retrieveNumbers();
+    }
+    t.retrieveAndSetUserNumbersOld = function() {
         var debug = true;
         console.log("RET_USER_NUMBERS_FORWARDING");
-        t.rcSdk.getPlatform().get(
+        t.rcSdk.platform().get(
             '/account/~/extension/~/forwarding-number'
         ).then(function(response) {
             var json = JSON.stringify(response.json);
@@ -197,11 +340,13 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
             if ('records' in response.json) {
                 userInfo['rcUserForwardingNumbers'] = response.json['records'];
             }
-            t.rcSdk.getPlatform().get(
+            t.rcSdk.platform().get(
                 '/account/~'
             ).then(function(response) {
                 var data = response.json;
-                var json = JSON.stringify(response.json);
+                //var json = JSON.stringify(response.json); // error?
+                var json = response._text;
+                console.log("RES '/account/~':" + json);
                 var rcUserNumbers = [];
                 if ('rcUserForwardingNumbers' in userInfo) {
                     for (var i=0,l=userInfo['rcUserForwardingNumbers'].length;i<l;i++) {
@@ -228,7 +373,7 @@ function rcDemoCore(rcPgCfgGen, rcPgCfgPg) {
                 }  
                 userInfo['rcUserNumbers'] = rcUserNumbers;
                 t.setUserInfo(userInfo);
-                console.log("USER_NUMBERS: " + JSON.stringify(userInfo));
+                console.log("AUTHZ_USER_INFO: " + JSON.stringify(userInfo));
             })
         }).catch(function(e) {
             alert('Error: ' + e.message);
@@ -241,7 +386,7 @@ function rcDemoAuth(rcDemoCore) {
     t.lsKeyAuth  = 'rcAuthInfo';
     t.lsKeyEvent = 'rcAuthEvent';
     t.rcDemoCore = rcDemoCore;
-    t.rcPlatform = t.rcDemoCore.rcSdk.getPlatform();
+    t.rcPlatform = t.rcDemoCore.rcSdk.platform();
     t.debug = false;
     t.init = function() {
         console.log("INIT_AUTH");
@@ -257,8 +402,8 @@ function rcDemoAuth(rcDemoCore) {
     ];
     t.getAuthData = function() {
         var authJson = window.localStorage.getItem(t.lsKeyAuth);
-        //console.log("GOT_JSON " + authData);
-        if (!authJson || authJson.length<1) {
+        console.log("GET_AUTH_DATA: [" + t.lsKeyAuth + "] " + authJson);
+        if (!authJson || authJson.length<1 || authJson == 'undefined') {
             return {};
         }
         var authData = JSON.parse(authJson);
@@ -266,6 +411,7 @@ function rcDemoAuth(rcDemoCore) {
     }
     t.setAuthData = function(authData) {
         window.localStorage.setItem(t.lsKeyAuth, JSON.stringify(authData));
+        console.log("SET_AUTH_DATA: [" + t.lsKeyAuth + "] " + JSON.stringify(authData));
         if ('access_token' in authData && authData['access_token'].length>0) {
             $('#appMessage').hide();
         } else {
@@ -309,7 +455,7 @@ function rcDemoAuth(rcDemoCore) {
     }
     t.pageAuthPopulate = function() {
         var authData = t.getAuthData();
-        console.log(JSON.stringify(authData));
+        console.log("POP_AUTH_DATA" + JSON.stringify(authData));
         var data = [
           {'sto': 'userpath_num', 'dom1': '#rc_act_link_usr', 'dom2': '#rcLinkUsername'},
           {'sto': 'userpath_ext', 'dom1': '#rc_act_link_ext', 'dom2': '#rcLinkExtension'},
@@ -319,7 +465,7 @@ function rcDemoAuth(rcDemoCore) {
           {'sto': 'refresh_token_expires_in', 'dom1': '#rc_act_link_acc', 'dom2': '#rcLinkRefreshTokenTtl'},
           {'sto': 'scope', 'dom1': '#rc_act_link_acc', 'dom2': '#rcLinkScope'}
         ];
-        for (var i=0;i<data.length;i++) {
+        for (var i=0; i<data.length; i++) {
             var sto = data[i]['sto'];
             if ('dom1' in data[i]) {
                 var dom1 = data[i]['dom1'];
@@ -442,13 +588,18 @@ function rcDemoCall(rcDemoCore) {
         roHelper.create(unsavedRingout);
         return roHelper;
     }
-    t.createRingOutSimple = function(from, to, options) {
+    t.createRingOutSimple = function(to, from, callerId, options) {
         if (!options) {
             options = {
-                from: {phoneNumber: from},
                 to:   {phoneNumber: to},
                 playPrompt: true
             };
+        }
+        if (from != undefined && from.length>0) {
+            options['from'] = {phoneNumber: from};
+        }
+        if (callerId != undefined && callerId.length>0) {
+            options['callerId'] = {phoneNumber: callerId};
         }
         console.log("FROM " + from);
         console.log("TO " + to);
@@ -462,29 +613,30 @@ function ringOutHelper(rcsdk) {
     var t=this;
     t.rcsdk = rcsdk;
     t.init = function() {
-        t.platform = t.rcsdk.getPlatform();
-        t.Ringout = t.rcsdk.getRingoutHelper(); // this is the helper
-        t.Utils = rcsdk.getUtils();
-        t.Log = rcsdk.getLog();
+        t.platform = t.rcsdk.platform();
+        var helpers = RingCentral.Helpers;
+        t.Ringout = helpers.ringout();
+        // t.Utils = rcsdk.getUtils();
+        t.Utils = helpers.utils;
         t.timeout = null; // reference to timeout object
         t.ringout = {};
     }
     t.handleError = function(e) {
-        t.Log.error(e);
-        console.log(e.message);
+        console.log("ERROR: " + e);
     }
     t.create = function(unsavedRingout) {
         console.log("CREATE " + JSON.stringify(unsavedRingout));
         t.platform
-            .apiCall(t.Ringout.saveRequest(unsavedRingout))
+            .send(t.Ringout.saveRequest(unsavedRingout))
             .then(function(response) {
-
-                t.Utils.extend(t.ringout, response.data);
-                t.Log.info('First status:', t.ringout.status.callStatus);
+                console.log('RINGOUT_CALL_SUCCESS');
+                //t.Utils.extend(t.ringout, response.data);
+                //console.log('Info: First status:', t.ringout.status.callStatus);
                 //t.timeout = t.Utils.poll(update, 500, t.timeout);
-
             })
-            .catch(t.handleError);
+            .catch(function(e) {
+                console.log('RINGOUT_ERROR: ' + e.message);
+            });
     }
     t.init();
 }
@@ -492,24 +644,24 @@ function ringOutHelper(rcsdk) {
 function rcDemoCallLog(rcSdk) {
     var t=this;
     t.rcSdk = rcSdk;
-    t.refreshCallLogTable = function() {
-
-    }
+    t.refreshCallLogTable = function() {}
     t.populateRecords = function() {
         var rcsdk = t.rcSdk;
-        var platform = rcsdk.getPlatform();
+        var platform = rcsdk.platform();
         var calls = [];
-        var Call = rcsdk.getCallHelper();
+        var Call = helpers.call();
         // This call may be repeated when needed, for example as a response to incoming Subscription
-        platform.apiCall(Call.loadRequest(null, {
+        platform.send(Call.loadRequest(null, {
             query: { // this can be omitted
                 page: 1,
                 perPage: 10
-            },
+            }
         })).then(function(response) {
-            calls = Call.merge(calls, response.data.records); // safely merge existing active calls with new ones
+            console.log("RESPONSE_CALLS: " + response.text());
+            calls = Call.merge(calls, response.json().records); // safely merge existing active calls with new ones
             t.populateCalls(calls);
         }).catch(function(e) {
+            console.log("E_RESPONSE_CALL_LOG: " + e);
             alert('Recent Calls Error: ' + e.message);
         });
     }
@@ -536,7 +688,7 @@ function rcDemoCallLog(rcSdk) {
             var recording = '';
             if ('recording' in call && 'contentUri' in call['recording']) {
                 var uri = call['recording']['contentUri'];
-                var uriAc = rcsdk.getPlatform().apiUrl(uri, {addToken: true});
+                var uriAc = rcsdk.platform().createUrl(uri, {addToken: true});
                 console.log(uri);
                 console.log(uriAc);
                 recording = $('<audio>').attr('controls', 'controls').append(
@@ -647,21 +799,23 @@ function rcDemoSms(rcDemoCore) {
     t.rcDemoCore = rcDemoCore
     t.rcSdk = t.rcDemoCore.rcSdk;
     t.sendMessage = function(from, to, text) {
-        var platform = t.rcSdk.getPlatform();
+        if (text.length < 0) {
+            alert('Please enter text to send');
+            return;
+        }
+        var platform = t.rcSdk.platform();
         from = phoneUtils.formatE164(from,'us');
         to = phoneUtils.formatE164(to,'us');        
         platform.post('/account/~/extension/~/sms', {
-            body: {
-                from: {phoneNumber:from}, // Your sms-enabled phone number
-                to: [
-                    {phoneNumber:to} // Second party's phone number
-                ],
-                text: text
-            }
+            from: {phoneNumber:from}, // Your sms-enabled phone number
+            to: [
+                {phoneNumber:to} // Second party's phone number
+            ],
+            text: text
         }).then(function(response) {
-            console.log('SMS_SEND_Success: ' + response.data.id);
+            console.log('SMS_SEND_Success: ' + response.json().id);
         }).catch(function(e) {
-            console.log('SMS_SEND_Error: ' + e.message);
+            console.log('SMS_SEND_Error: ' + e);
         });
     }
 }

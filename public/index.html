@@ -14,16 +14,14 @@
     <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha256-k2/8zcNbxVIh5mnQ52A0r3a6jAgMGxFJFE2707UxGCk= sha512-ZV9KawG2Legkwp3nAlxLIVFudTauWuBpC10uEafMHYL0Sarrz5A7G79kXh5+5+woxQ5HM559XX2UZjMJ36Wplg==" crossorigin="anonymous">
     <!--link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/styles/default.min.css" rel="stylesheet"-->
     <link href="./css/highlight.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.1.0/highlight.min.js"></script>
     <script src="./vendor/hideShowPassword/2.0.7/hideShowPassword.min.js"></script>
     <script src="./vendor/nathanhammond/libphonenumber/0.9.3/dist/libphonenumber.js"></script>
     <!-- RC SDK -->
-    <script src="./vendor/es6-promise-polyfill/1.0.0/promise.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/aes.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/rollups/sha256.js"></script>
-    <script src="./vendor/crypto-js/3.1.2/components/mode-ecb.js"></script>
-    <script src="./vendor/pubnub/3.6.7/pubnub.js"></script>
-    <script src="./vendor/rcsdk/1.2.1/build/rc-sdk.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/es6-promise/3.1.2/es6-promise.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fetch/0.11.0/fetch.min.js"></script>
+    <script src="https://cdn.pubnub.com/pubnub-3.7.13.min.js"></script>
+    <script src="./components/ringcentral/build/ringcentral.min.js"></script>
     <!-- Demo scripts -->
     <link rel="stylesheet" href="./css/fontawesome-more.css">
     <link rel="stylesheet" href="./css/ctidemo.css">
@@ -42,11 +40,12 @@ var rcCallWin = new rcCallWinMgr();
 
 $(function() {
     rcDemo.init();
-    rcDemo.Core.rcSdk.getPlatform().isAuthorized()
+    rcDemo.Core.rcSdk.platform().loggedIn()
         .then(function () {
             rcCallWin.rcSdk = rcDemo.Core.rcSdk;
             rcCallWin.startSubscription();
         }).catch(function (e) {
+            console.log('START_ERROR ' + e);
             $('#appMessage').show();
         })
 /*
@@ -57,11 +56,6 @@ $(function() {
     });*/
 });
 
-/*
-$(window).on('beforeunload', function() {
-  return 'Your own message goes here...';
-});
-*/
     </script>
   </head>
   <body role="document">
@@ -225,7 +219,7 @@ $(window).on('beforeunload', function() {
               <ol>  
                 <li><a href="https://developers.ringcentral.com">Developer Portal <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://developers.ringcentral.com/api-docs/latest/index.html">API Docs <i class="fa fa-external-link"></i></a></li>
-                <li><a href="http://ringcentral.github.io/api-explorer">API Explorer <i class="fa fa-external-link"></i></a></li>
+                <li><a href="https://developer.ringcentral.com/api-explorer/">API Explorer <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://github.com/ringcentral">SDKs <i class="fa fa-external-link"></i></a></li>
                 <li><a href="https://ringcentral.github.io/cti-tutorial">CTI Tutorial <i class="fa fa-external-link"></i></a></li>
               </ol>

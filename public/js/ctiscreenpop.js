@@ -57,6 +57,7 @@ function rcCallWinMgr(rcSdk) {
         }
     }
     t.processCall = function(call) {
+        console.log('PROCESSING_CALL');
         var ts = call.telephonyStatus;
         $('#rcCallFrom').html(call.from);
         $('#rcCallTo').html(call.to);
@@ -73,31 +74,50 @@ function rcCallWinMgr(rcSdk) {
         }
     }
     t.startSubscription = function() {
-        if (!t.rcSdk.getPlatform().isTokenValid()) {
+        if (!t.rcSdk.platform().loggedIn()) {
             console.log("E_IS_NOT_AUTHORIZED__SKIP_SUBSCRIPTION");
             return;
         }
-        t.subscription = t.rcSdk.getSubscription();
+        t.subscription = t.rcSdk.createSubscription();
 
         t.subscription
             .on(t.subscription.events.notification, function(msg) {
-                var callerId = msg.body.activeCalls[0].from;
-                console.log(msg.body.activeCalls[0].from); // activeCalls is array
-                console.log(msg.body.activeCalls[0].to);
-                var call0 = msg.body.activeCalls[0];
+                console.log("SUB_ON");
+
+                var calls = msg.body.activeCalls;
+                var call0 = calls[0];
+
+                //console.log(msg.body.activeCalls[0].from); // activeCalls is array
+                //console.log(msg.body.activeCalls[0].to);
+                console.log(call0.from); // activeCalls is array
+                console.log(call0.to);
+
+                //var call0 = msg.body.activeCalls[0];
+                var callerId = call0.from;
                 var json = JSON.stringify(call0);
                 console.log(json);
                 rcCallWin.processCall(call0);
-            })
-            .register({
+            });
+
+        t.subscription
+            .addEventFilters([
+                '/account/~/extension/~/presence?detailedTelephonyState=true'
+            ]).register();
+
+            /*
+            .then(function(response) {
+                console.log(response.text());
+                console.log("subscription subscribed");
+            });
+*/
+            /*.register({
                 events: [
                     '/account/~/extension/~/presence?detailedTelephonyState=true'
-                ],
-            })
-            .then();
+                ],*/
+        console.log('createSubscription');
     }
     t.endSubscription = function() {
-        if (t.rcSdk.getPlatform.isTokenValid()) {
+        if (t.rcSdk.platform.loggedIn()) {
             if (t.subscription) {
                 t.subscription.remove({async: false});
             }
