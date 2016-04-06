@@ -276,56 +276,52 @@ w.location.assign('rcmobile://call?number=16501112222');
     var t=this;
     t.rcsdk = rcsdk;
     t.init = function() {
-    t.platform = t.rcsdk.platform();
-    var helpers = RingCentral.Helpers;
-    t.Ringout = helpers.ringout();
-    // t.Utils = rcsdk.getUtils();
-    t.Utils = helpers.utils;
-    t.timeout = null; // reference to timeout object
-    t.ringout = {};
+        t.platform = t.rcsdk.platform();
+        var helpers = RingCentral.Helpers;
+        t.Ringout = helpers.ringout();
+        t.Utils = helpers.utils;
+        t.timeout = null; // reference to timeout object
+        t.ringout = {};
     }
     t.handleError = function(e) {
-    console.log("ERROR: " + e);
+        console.log("ERROR: " + e);
     }
     t.create = function(unsavedRingout) {
-    console.log("CREATE " + JSON.stringify(unsavedRingout));
-    t.platform
-    .send(t.Ringout.saveRequest(unsavedRingout))
-    .then(function(response) {
-    console.log('RINGOUT_CALL_SUCCESS');
-    //t.Utils.extend(t.ringout, response.data);
-    //console.log('Info: First status:', t.ringout.status.callStatus);
-    //t.timeout = t.Utils.poll(update, 500, t.timeout);
-    })
-    .catch(function(e) {
-    console.log('RINGOUT_ERROR: ' + e.message);
-    });
+        console.log("CREATE " + JSON.stringify(unsavedRingout));
+        t.platform
+            .send(t.Ringout.saveRequest(unsavedRingout))
+            .then(function(response) {
+                console.log('RINGOUT_CALL_SUCCESS');
+                //t.Utils.extend(t.ringout, response.data);
+                //console.log('Info: First status:', t.ringout.status.callStatus);
+                //t.timeout = t.Utils.poll(update, 500, t.timeout);
+            })
+            .catch(function(e) {
+                console.log('RINGOUT_ERROR: ' + e.message);
+            });
+        }
+        t.init();
     }
-    t.init();
-    }
-
     t.createRingOut = function(unsavedRingout) {
-    var roHelper = new ringOutHelper(t.rcSdk);
-    roHelper.create(unsavedRingout);
-    return roHelper;
-    }</code></pre>
+        var roHelper = new ringOutHelper(t.rcSdk);
+        roHelper.create(unsavedRingout);
+        return roHelper;
+    }
+}</code></pre>
 
               <h3>SMS</h3>
 
-<pre><code class="javascript">
-    platform.post('/account/~/extension/~/sms', {
+<pre><code class="javascript">platform.post('/account/~/extension/~/sms', {
     from: {phoneNumber:from}, // Your sms-enabled phone number
     to: [
-    {phoneNumber:to} // Second party's phone number
+        {phoneNumber:to} // Second party's phone number
     ],
     text: text
-    }).then(function(response) {
+}).then(function(response) {
     console.log('SMS_SEND_Success: ' + response.json().id);
-    }).catch(function(e) {
+}).catch(function(e) {
     console.log('SMS_SEND_Error: ' + e);
-    });
-</code></pre>
-
+});</code></pre>
 
             </div>
           </div>
