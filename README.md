@@ -31,8 +31,7 @@ You can also run this demo on any webserver by adding the `public` directory to 
 ```sh
 $ git clone https://github.com/ringcentral/ringcentral-cti-demo-js
 $ cd ringcentral-cti-demo-js
-$ bower install ringcentral --save
-$ bower install ringcentral-helpers --save
+$ bower install ringcentral ringcentral-helpers --save
 ```
 
 The included `.bowerrc` file will save components to the `public/components` directory.
