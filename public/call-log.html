@@ -178,21 +178,22 @@ $(function() {
 
               <p>Call Log retrieval is done using the call log API end point. This can be done for all extensions if the authorizing user is the admin user or on a per extension level for extension-based authorization.</p>
 
-<pre><code class="javascript">var Call = rcsdk.getCallHelper();
-
-// This call may be repeated when needed, for example as a response to incoming Subscription
-platform.apiCall(Call.loadRequest(null, {
+<pre><code class="javascript">        var Call = helpers.call();
+    // This call may be repeated when needed, for example as a response to incoming Subscription
+    platform.send(Call.loadRequest(null, {
     query: { // this can be omitted
-        page: 1,
-        perPage: 10
-    ,
-})).then(function(response) {
-    // safely merge existing active calls with new ones
-    calls = Call.merge(calls, response.data.records);
+    page: 1,
+    perPage: 10
+    }
+    })).then(function(response) {
+    console.log("RESPONSE_CALLS: " + response.text());
+    calls = Call.merge(calls, response.json().records); // safely merge existing active calls with new ones
     t.populateCalls(calls);
-}).catch(function(e) {
+    }).catch(function(e) {
+    console.log("E_RESPONSE_CALL_LOG: " + e);
     alert('Recent Calls Error: ' + e.message);
-});</code></pre>
+    });
+</code></pre>
 
               <p>The following is an example report with an optional Call Recording object:</p>
 
@@ -227,8 +228,8 @@ platform.apiCall(Call.loadRequest(null, {
 
               <p>To retrieve call recordings you can simply add the access token to the uri provided or add the access token as a header. The URL method is shown below:</p>
 
-<pre><code class="javascript">var recordingUrl = 'https://platform.ringcentral.com/....';
-recordingUrl = rcsdk.getPlatform().apiUrl(uri, {addToken: true});</code></pre>
+<pre><code class="javascript">var recordingUrl = call['recording']['contentUri'];
+    var recordingUrl = rcsdk.platform().createUrl(uri, {addToken: true});</code></pre>
 
               <p>This approach can be used to batch download or individual streaming playback.</p>
 
@@ -244,8 +245,8 @@ recordingUrl = rcsdk.getPlatform().apiUrl(uri, {addToken: true});</code></pre>
 
               <p>This demo uses jQuery to create the HTML5 audio element as follows:</p>
 
-<pre><code class="javascript">var recordingUrl = 'https://platform.ringcentral.com/....';
-recordingUrl = rcsdk.getPlatform().apiUrl(uri, {addToken: true});
+<pre><code class="javascript">var recordingUrl = call['recording']['contentUri'];
+recordingUrl = rcsdk.platform().createUrl(uri, {addToken: true});
 var recordingEl = $('&lt;audio&gt;').attr('controls', 'controls').append(
     $('&lt;source&gt;').attr('src', recordingUrl).attr('type', 'audio/mpeg')
 .append(
