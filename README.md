@@ -16,11 +16,11 @@ The demo showcases the following use cases:
 
 [View Screenshot](https://raw.githubusercontent.com/ringcentral/ringcentral-cti-demo-js/master/public/images/cti-demo.png)
 
-[View Live Demo - http://ringcentral.github.io/cti-demo/](http://ringcentral.github.io/cti-demo/)
+[View Live Demo - https://ringcentral.github.io/cti-demo/](https://ringcentral.github.io/cti-demo/)
 
 ## Getting Started
 
-The full installation instructions are included as an HTML file in the demo itself. You can view the [full installation instructions on the live demo](http://grokify.github.io/cti-demo/instructions.html).
+The full installation instructions are included as an HTML file in the demo itself. You can view the [full installation instructions on the live demo](https://ringcentral.github.io/cti-demo/instructions.html).
 
 Since this runs live on GitHub Pages, you can run this demo without any server-side installation, though it may be worthwhile to install the RingCentral for Desktop softphone as described in the instructions.
 
