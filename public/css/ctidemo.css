@@ -33,6 +33,8 @@ pre {margin-bottom:2em;}
 
 .rcDemoCfgAuth2L {display:none;}
 
+.rcDemoFont {font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;}
+
 .equal, .equal > div[class*='col-'] {  
     display: -webkit-flex;
     display: flex;
@@ -40,7 +42,7 @@ pre {margin-bottom:2em;}
 }
 
 @media (min-width: 800){
-.equal, .equal > div[class*='col-'] {}
+  .equal, .equal > div[class*='col-'] {}
 }
 
 .nowrap {white-space:nowrap;scroll-x:hidden;}
