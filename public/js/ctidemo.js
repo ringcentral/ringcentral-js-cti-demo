@@ -776,18 +776,18 @@ function rcDemoView(rcDemoCore) {
             if ('fa' in crumb) {
                 fa = '<i class="fa fa-' + crumb['fa'] + '"> ';
             }
+            var disp = $('<span>').attr('class', 'rcDemoFont').append('&nbsp;' + crumb['disp']);
+            var link = $('<a>').attr('href','./' + crumb['stub'] + '.html').append(
+                $('<span>').attr('class', 'tab').append(fa).append(disp)
+            )
             if (t.rcPgCfgPg.rcPgCrumbStub == crumb['stub']) {
                 $('#menu-bar-items').append(
-                    $('<li>').attr('class', 'active').append(
-                        $('<a>').attr('href','./' + crumb['stub'] + '.html').append(
-                            $('<span>').attr('class', 'tab').append(fa + crumb['disp'])
-                )));
+                    $('<li>').attr('class', 'active').append(link)
+                );
             } else {
                 $('#menu-bar-items').append(
-                    $('<li>').append(
-                        $('<a>').attr('href','./' + crumb['stub'] + '.html').append(
-                            $('<span>').attr('class', 'tab').append(fa + crumb['disp'])
-                )));
+                    $('<li>').append(link)                   
+                );
             }
         }
     }
