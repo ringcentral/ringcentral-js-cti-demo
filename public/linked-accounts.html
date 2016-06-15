@@ -62,7 +62,7 @@ function Auth3l(rcDemo) {
         var appInfo = t.rcDemo.Core.getAppInfo();
         var redirectUri = appInfo['rcAppRedirectUri']
         console.log("REDIRECT_URI " + redirectUri);
-        var urltoopen = t.rcDemo.Core.rcSdk.platform().loginUrl({
+        var urltoopen = t.rcDemo.Core.rcSdk.platform().authUrl({
             redirectUri: redirectUri
         })
         console.log("OAUTH3L_URI " + urltoopen);
@@ -219,13 +219,13 @@ $(function() {
               <p>To access a user's RingCentral data, the app needs to request and receive OAuth 2.0 access token to access that data. In this demo, clicking the <button data-toggle="modal" data-target="#linkAccountModal"><i class="fa fa-link"></i> Link Account</button> will allow the user to enter their username, extension and password which the app then uses to call the <span class="fixed">login()</span> method as shown below to receive an access token / refresh token pair.</p>
 
               <pre><code class="javascript">platform.login({
-                  code: "authorization_code_from_redirect_uri",
-                  redirectUri: "redirect_uri"
-                  }).then(function(response) {
-                  // run success code
-                  }).catch(function(e) {
-                  //run exception code
-                  });</code></pre>
+    code: "authorization_code_from_redirect_uri",
+    redirectUri: "redirect_uri"
+}).then(function(response) {
+    // run success code
+}).catch(function(e) {
+    //run exception code
+});</code></pre>
 
               <h3>Unlink Account - Logout</h3>
 
