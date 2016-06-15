@@ -44,7 +44,7 @@ function processOAuthRedirect(rcDemo) {
     var appInfo = rcDemo.Core.getAppInfo();
     rcsdk.platform().logout();
 
-    var qs = rcsdk.platform().parseAuthRedirectUrl(window.location.href);
+    var qs = rcsdk.platform().parseLoginRedirectUrl(window.location.href);
     qs.redirectUri = appInfo['rcAppRedirectUri'];
 
     if ('code' in qs) {

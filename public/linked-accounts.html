@@ -62,7 +62,7 @@ function Auth3l(rcDemo) {
         var appInfo = t.rcDemo.Core.getAppInfo();
         var redirectUri = appInfo['rcAppRedirectUri']
         console.log("REDIRECT_URI " + redirectUri);
-        var urltoopen = t.rcDemo.Core.rcSdk.platform().authUrl({
+        var urltoopen = t.rcDemo.Core.rcSdk.platform().loginUrl({
             redirectUri: redirectUri
         })
         console.log("OAUTH3L_URI " + urltoopen);
@@ -215,17 +215,17 @@ $(function() {
 
               <h3>Link Account - Authorizaton</h3>
 
-              <p>To access a user's RingCentral data, the app needs to request and receive OAuth 2.0 access token to access that data. In this demo, clicking the <button data-toggle="modal" data-target="#linkAccountModal"><i class="fa fa-link"></i> Link Account</button> will allow the user to enter their username, extension and password which the app then uses to call the <span class="fixed">authorize()</span> method as shown below to receive an access token / refresh token pair.</p>
+              2<p> Please keep in mind that we are following the OAuth2.0 Code flow for Authorization here as described in our Demo<a href="https://github.com/grokify/ringcentral-demos-oauth/tree/master/javascript">RingCentral 3-Legged OAuth Demo in JavaScript <i class="fa fa-external-link"></i></a></p>
+              <p>To access a user's RingCentral data, the app needs to request and receive OAuth 2.0 access token to access that data. In this demo, clicking the <button data-toggle="modal" data-target="#linkAccountModal"><i class="fa fa-link"></i> Link Account</button> will allow the user to enter their username, extension and password which the app then uses to call the <span class="fixed">login()</span> method as shown below to receive an access token / refresh token pair.</p>
 
-              <pre><code class="javascript">platform.authorize({
-    username: username,
-    extension: extension,
-    password: password
-}).then(function(response) {
-    // run success code
-}).catch(function(e) {
-    //run exception code
-});</code></pre>
+              <pre><code class="javascript">platform.login({
+                  code: "authorization_code_from_redirect_uri",
+                  redirectUri: "redirect_uri"
+                  }).then(function(response) {
+                  // run success code
+                  }).catch(function(e) {
+                  //run exception code
+                  });</code></pre>
 
               <h3>Unlink Account - Logout</h3>
 
